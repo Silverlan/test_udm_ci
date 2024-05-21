@@ -2,8 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
-#pragma optimize("", off)
+#include "udm_definitions.hpp"
+#include <memory>
+#include <string_view>
+#include <sharedutils/util.h>
+
+module udm;
 udm::PropertyWrapper::PropertyWrapper(Property &o) : prop {&o} {}
 
 udm::PropertyWrapper::PropertyWrapper(const PropertyWrapper &other) : prop {other.prop}, arrayIndex {other.arrayIndex} { static_assert(sizeof(PropertyWrapper) == 16, "Update this function when the struct has changed!"); }

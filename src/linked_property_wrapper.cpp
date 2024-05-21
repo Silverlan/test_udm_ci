@@ -2,9 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
 #include <lz4.h>
 #include <sharedutils/util_string.h>
+#include <memory>
+#include <cassert>
+
+module udm;
 
 udm::LinkedPropertyWrapper::LinkedPropertyWrapper(const LinkedPropertyWrapper &other) : PropertyWrapper {other}, propName {other.propName}, prev {other.prev ? std::make_unique<LinkedPropertyWrapper>(*other.prev) : nullptr} { linked = true; }
 
@@ -163,13 +166,6 @@ bool udm::LinkedPropertyWrapper::operator==(const LinkedPropertyWrapper &other) 
 }
 bool udm::LinkedPropertyWrapper::operator!=(const LinkedPropertyWrapper &other) const { return !operator==(other); }
 
-udm::ElementIteratorWrapper udm::LinkedPropertyWrapper::ElIt()
-{
-	return ElementIteratorWrapper {*this};
-	//if(linked)
-	//	return ElementIteratorWrapper{*static_cast<LinkedPropertyWrapper*>(this)};
-	//return ElementIteratorWrapper{LinkedPropertyWrapper{*this}};
-}
 udm::LinkedPropertyWrapper udm::LinkedPropertyWrapper::operator[](const std::string_view &key) const { return PropertyWrapper::operator[](key); }
 udm::LinkedPropertyWrapper udm::LinkedPropertyWrapper::operator[](const std::string &key) const { return PropertyWrapper::operator[](key); }
 udm::LinkedPropertyWrapper udm::LinkedPropertyWrapper::operator[](const char *key) const { return PropertyWrapper::operator[]((key)); }

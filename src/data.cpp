@@ -2,10 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
+#include <udm_definitions.hpp>
 #include <sharedutils/magic_enum.hpp>
 #include <sharedutils/util_string.h>
+#include <mathutil/umath.h>
+#include <mathutil/uvec.h>
+#include <mathutil/uquat.h>
+#include <mathutil/transform.hpp>
 #include <fsys/ifile.hpp>
+
+module udm;
 
 std::optional<udm::FormatType> udm::Data::GetFormatType(const std::string &fileName, std::string &outErr)
 {
@@ -388,7 +394,7 @@ void udm::Data::ResolveReferences()
 		if(!prop)
 			return;
 		if(prop.IsType(Type::Element)) {
-			for(auto pair : prop.ElIt())
+			for(auto pair : ElIt {prop})
 				resolveReferences(pair.property);
 		}
 		else if(prop.IsType(Type::Array)) {

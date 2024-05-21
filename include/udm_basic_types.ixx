@@ -2,16 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UDM_BASIC_TYPES_HPP__
-#define __UDM_BASIC_TYPES_HPP__
-
 #include <string>
 #include <cinttypes>
 #include <mathutil/uvec.h>
 #include <mathutil/transform.hpp>
 #include <variant>
 
-namespace udm {
+export module udm.basic_types;
+export namespace udm
+{
 	using DataValue = void *;
 	using String = std::string;
 	using Int8 = int8_t;
@@ -43,5 +42,3 @@ namespace udm {
 	using Mat3x4 = Mat3x4;
 	using Nil = std::monostate;
 };
-
-#endif

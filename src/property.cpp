@@ -2,9 +2,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
+#include <udm_definitions.hpp>
 #include <sharedutils/base64.hpp>
+#include <mathutil/umath.h>
 #include <sstream>
+#include <cassert>
+
+module udm;
 
 void udm::Property::Construct(Property &prop, Type type)
 {

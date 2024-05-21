@@ -2,8 +2,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
 #include <sharedutils/base64.hpp>
+#include <cassert>
+
+module udm;
 
 static void to_json(udm::LinkedPropertyWrapperArg prop, std::stringstream &ss, const std::string &t)
 {
@@ -33,7 +35,7 @@ static void to_json(udm::LinkedPropertyWrapperArg prop, std::stringstream &ss, c
 	if(prop.IsType(udm::Type::Element)) {
 		ss << "{\n";
 		auto first = true;
-		for(auto &pair : const_cast<udm::LinkedPropertyWrapper &>(prop).ElIt()) {
+		for(auto &pair : udm::ElIt {const_cast<udm::LinkedPropertyWrapper &>(prop)}) {
 			if(first)
 				first = false;
 			else
@@ -63,8 +65,6 @@ static void to_json(udm::LinkedPropertyWrapperArg prop, std::stringstream &ss, c
 	}
 
 	auto strVal = prop.ToValue<udm::String>();
-	if(!strVal.has_value())
-		std::cout << "";
 	assert(strVal.has_value());
 	if(strVal.has_value())
 		ss << "\"" << *strVal << "\"";

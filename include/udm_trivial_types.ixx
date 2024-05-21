@@ -2,28 +2,67 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UDM_TRIVIAL_TYPES_HPP__
-#define __UDM_TRIVIAL_TYPES_HPP__
-
-#include "sharedutils/util.h"
-#include "udm_type_structs.hpp"
-#include "udm_enums.hpp"
-#include "udm_basic_types.hpp"
+#include "udm_definitions.hpp"
+#include <sharedutils/util.h>
+#include <sharedutils/magic_enum.hpp>
 #include <string>
 #include <variant>
 #include <map>
 #include <mathutil/uvec.h>
 #include <mathutil/transform.hpp>
-#include "udm_exception.hpp"
-#pragma warning( push )
-#pragma warning( disable : 4715 )
+#pragma warning(push)
+#pragma warning(disable : 4715)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wreturn-type"
-namespace udm {
-	static constexpr std::array<Type, 12> NUMERIC_TYPES = {Type::Int8, Type::UInt8, Type::Int16, Type::UInt16, Type::Int32, Type::UInt32, Type::Int64, Type::UInt64, Type::Float, Type::Double, Type::Boolean, Type::Half};
-	static constexpr std::array<Type, 15> GENERIC_TYPES
-	  = {Type::Vector2, Type::Vector3, Type::Vector4, Type::Vector2i, Type::Vector3i, Type::Vector4i, Type::Quaternion, Type::EulerAngles, Type::Srgba, Type::HdrColor, Type::Transform, Type::ScaledTransform, Type::Mat4, Type::Mat3x4, Type::Nil};
-	static constexpr std::array<Type, 9> NON_TRIVIAL_TYPES = {Type::String, Type::Utf8String, Type::Blob, Type::BlobLz4, Type::Element, Type::Array, Type::ArrayLz4, Type::Reference, Type::Struct};
+
+export module udm.trivial_types;
+import udm.type_structs;
+import udm.enums;
+import udm.exceptions;
+import udm.basic_types;
+export namespace udm {
+	constexpr std::array<Type, 12> NUMERIC_TYPES = {
+	  Type::Int8,
+	  Type::UInt8,
+	  Type::Int16,
+	  Type::UInt16,
+	  Type::Int32,
+	  Type::UInt32,
+	  Type::Int64,
+	  Type::UInt64,
+	  Type::Float,
+	  Type::Double,
+	  Type::Boolean,
+	  Type::Half,
+	};
+	constexpr std::array<Type, 15> GENERIC_TYPES = {
+	  Type::Vector2,
+	  Type::Vector3,
+	  Type::Vector4,
+	  Type::Vector2i,
+	  Type::Vector3i,
+	  Type::Vector4i,
+	  Type::Quaternion,
+	  Type::EulerAngles,
+	  Type::Srgba,
+	  Type::HdrColor,
+	  Type::Transform,
+	  Type::ScaledTransform,
+	  Type::Mat4,
+	  Type::Mat3x4,
+	  Type::Nil,
+	};
+	constexpr std::array<Type, 9> NON_TRIVIAL_TYPES = {
+	  Type::String,
+	  Type::Utf8String,
+	  Type::Blob,
+	  Type::BlobLz4,
+	  Type::Element,
+	  Type::Array,
+	  Type::ArrayLz4,
+	  Type::Reference,
+	  Type::Struct,
+	};
 
 	template<typename T>
 	concept is_vector_type = std::is_same_v<T, Vector2> || std::is_same_v<T, Vector2i> || std::is_same_v<T, Vector3> || std::is_same_v<T, Vector3i> || std::is_same_v<T, Vector4> || std::is_same_v<T, Vector4i>;
@@ -99,7 +138,7 @@ namespace udm {
 		return false;
 	}
 
-	static constexpr uint8_t get_numeric_component_count(udm::Type type)
+	constexpr uint8_t get_numeric_component_count(udm::Type type)
 	{
 		if(udm::is_numeric_type(type))
 			return 1;
@@ -230,7 +269,6 @@ namespace udm {
 
 	constexpr bool is_trivial_type(Type t) { return !is_non_trivial_type(t) && t != Type::Invalid; }
 
-
 	template<class T>
 	struct tag_t {
 		using type = T;
@@ -340,11 +378,11 @@ namespace udm {
 			return tag<Struct>;
 		}
 		static_assert(NON_TRIVIAL_TYPES.size() == 9, "Update this list when new non-trivial types have been added!");
-    }
+	}
 	template<bool ENABLE_NUMERIC = true, bool ENABLE_GENERIC = true, bool ENABLE_NON_TRIVIAL = true, bool ENABLE_DEFAULT_RETURN = true, typename T>
 	    requires(ENABLE_NUMERIC || ENABLE_GENERIC || ENABLE_NON_TRIVIAL)
 	constexpr decltype(auto) visit(Type type, T vs)
-    {
+	{
 		if constexpr(ENABLE_NUMERIC) {
 			if(is_numeric_type(type))
 				return std::visit(vs, get_numeric_tag(type));
@@ -406,155 +444,156 @@ namespace udm {
 	}
 };
 
-template<typename T>
-constexpr udm::Type udm::type_to_enum()
-{
-	constexpr auto type = type_to_enum_s<T>();
-	if constexpr(umath::to_integral(type) > umath::to_integral(Type::Last))
-		[]<bool flag = false>() { static_assert(flag, "Unsupported type!"); }
-	();
-	return type;
-}
-
-template<typename T>
-constexpr udm::Type udm::type_to_enum_s()
-{
-	if constexpr(std::is_enum_v<T>)
-		return type_to_enum_s<std::underlying_type_t<T>>();
-
-	if constexpr(util::is_specialization<T, std::vector>::value)
-		return Type::Array;
-	else if constexpr(util::is_specialization<T, std::unordered_map>::value || util::is_specialization<T, std::map>::value)
-		return Type::Element;
-	else if constexpr(std::is_same_v<T, Nil> || std::is_same_v<T, void>)
-		return Type::Nil;
-	else if constexpr(util::is_string<T>::value || std::is_same_v<T, std::string_view>)
-		return Type::String;
-	else if constexpr(std::is_same_v<T, Utf8String>)
-		return Type::Utf8String;
-	else if constexpr(std::is_same_v<T, Int8>)
-		return Type::Int8;
-	else if constexpr(std::is_same_v<T, UInt8>)
-		return Type::UInt8;
-	else if constexpr(std::is_same_v<T, Int16>)
-		return Type::Int16;
-	else if constexpr(std::is_same_v<T, UInt16>)
-		return Type::UInt16;
-	else if constexpr(std::is_same_v<T, Int32>)
-		return Type::Int32;
-	else if constexpr(std::is_same_v<T, UInt32>)
-		return Type::UInt32;
-	else if constexpr(std::is_same_v<T, Int64>)
-		return Type::Int64;
-	else if constexpr(std::is_same_v<T, UInt64>)
-		return Type::UInt64;
-	else if constexpr(std::is_same_v<T, Float>)
-		return Type::Float;
-	else if constexpr(std::is_same_v<T, Double>)
-		return Type::Double;
-	else if constexpr(std::is_same_v<T, Vector2>)
-		return Type::Vector2;
-	else if constexpr(std::is_same_v<T, Vector2i>)
-		return Type::Vector2i;
-	else if constexpr(std::is_same_v<T, Vector3>)
-		return Type::Vector3;
-	else if constexpr(std::is_same_v<T, Vector3i>)
-		return Type::Vector3i;
-	else if constexpr(std::is_same_v<T, Vector4>)
-		return Type::Vector4;
-	else if constexpr(std::is_same_v<T, Vector4i>)
-		return Type::Vector4i;
-	else if constexpr(std::is_same_v<T, Quaternion>)
-		return Type::Quaternion;
-	else if constexpr(std::is_same_v<T, EulerAngles>)
-		return Type::EulerAngles;
-	else if constexpr(std::is_same_v<T, Srgba>)
-		return Type::Srgba;
-	else if constexpr(std::is_same_v<T, HdrColor>)
-		return Type::HdrColor;
-	else if constexpr(std::is_same_v<T, Boolean>)
-		return Type::Boolean;
-	else if constexpr(std::is_same_v<T, Transform>)
-		return Type::Transform;
-	else if constexpr(std::is_same_v<T, ScaledTransform>)
-		return Type::ScaledTransform;
-	else if constexpr(std::is_same_v<T, Mat4>)
-		return Type::Mat4;
-	else if constexpr(std::is_same_v<T, Mat3x4>)
-		return Type::Mat3x4;
-	else if constexpr(std::is_same_v<T, Blob>)
-		return Type::Blob;
-	else if constexpr(std::is_same_v<T, BlobLz4>)
-		return Type::BlobLz4;
-	else if constexpr(std::is_same_v<T, Element>)
-		return Type::Element;
-	else if constexpr(std::is_same_v<T, Array>)
-		return Type::Array;
-	else if constexpr(std::is_same_v<T, ArrayLz4>)
-		return Type::ArrayLz4;
-	else if constexpr(std::is_same_v<T, Reference>)
-		return Type::Reference;
-	else if constexpr(std::is_same_v<T, Half>)
-		return Type::Half;
-	else if constexpr(std::is_same_v<T, Struct>)
-		return Type::Struct;
-	static_assert(umath::to_integral(Type::Count) == 36, "Update this list when new types are added!");
-	return Type::Invalid;
-}
-
-constexpr size_t udm::size_of(Type t)
-{
-	if(is_numeric_type(t)) {
-		auto tag = get_numeric_tag(t);
-		return std::visit([&](auto tag) { return sizeof(typename decltype(tag)::type); }, tag);
+export namespace udm {
+	template<typename T>
+	constexpr Type type_to_enum()
+	{
+		constexpr auto type = type_to_enum_s<T>();
+		if constexpr(umath::to_integral(type) > umath::to_integral(Type::Last))
+			[]<bool flag = false>() { static_assert(flag, "Unsupported type!"); }
+		();
+		return type;
 	}
 
-	if(is_generic_type(t)) {
-		auto tag = get_generic_tag(t);
-		return std::visit(
-		  [&](auto tag) {
-			  if constexpr(std::is_same_v<typename decltype(tag)::type, std::monostate>)
-				  return static_cast<uint64_t>(0);
-			  return sizeof(typename decltype(tag)::type);
-		  },
-		  tag);
+	template<typename T>
+	constexpr Type type_to_enum_s()
+	{
+		if constexpr(std::is_enum_v<T>)
+			return type_to_enum_s<std::underlying_type_t<T>>();
+
+		if constexpr(util::is_specialization<T, std::vector>::value)
+			return Type::Array;
+		else if constexpr(util::is_specialization<T, std::unordered_map>::value || util::is_specialization<T, std::map>::value)
+			return Type::Element;
+		else if constexpr(std::is_same_v<T, Nil> || std::is_same_v<T, void>)
+			return Type::Nil;
+		else if constexpr(util::is_string<T>::value || std::is_same_v<T, std::string_view>)
+			return Type::String;
+		else if constexpr(std::is_same_v<T, Utf8String>)
+			return Type::Utf8String;
+		else if constexpr(std::is_same_v<T, Int8>)
+			return Type::Int8;
+		else if constexpr(std::is_same_v<T, UInt8>)
+			return Type::UInt8;
+		else if constexpr(std::is_same_v<T, Int16>)
+			return Type::Int16;
+		else if constexpr(std::is_same_v<T, UInt16>)
+			return Type::UInt16;
+		else if constexpr(std::is_same_v<T, Int32>)
+			return Type::Int32;
+		else if constexpr(std::is_same_v<T, UInt32>)
+			return Type::UInt32;
+		else if constexpr(std::is_same_v<T, Int64>)
+			return Type::Int64;
+		else if constexpr(std::is_same_v<T, UInt64>)
+			return Type::UInt64;
+		else if constexpr(std::is_same_v<T, Float>)
+			return Type::Float;
+		else if constexpr(std::is_same_v<T, Double>)
+			return Type::Double;
+		else if constexpr(std::is_same_v<T, Vector2>)
+			return Type::Vector2;
+		else if constexpr(std::is_same_v<T, Vector2i>)
+			return Type::Vector2i;
+		else if constexpr(std::is_same_v<T, Vector3>)
+			return Type::Vector3;
+		else if constexpr(std::is_same_v<T, Vector3i>)
+			return Type::Vector3i;
+		else if constexpr(std::is_same_v<T, Vector4>)
+			return Type::Vector4;
+		else if constexpr(std::is_same_v<T, Vector4i>)
+			return Type::Vector4i;
+		else if constexpr(std::is_same_v<T, Quaternion>)
+			return Type::Quaternion;
+		else if constexpr(std::is_same_v<T, EulerAngles>)
+			return Type::EulerAngles;
+		else if constexpr(std::is_same_v<T, Srgba>)
+			return Type::Srgba;
+		else if constexpr(std::is_same_v<T, HdrColor>)
+			return Type::HdrColor;
+		else if constexpr(std::is_same_v<T, Boolean>)
+			return Type::Boolean;
+		else if constexpr(std::is_same_v<T, Transform>)
+			return Type::Transform;
+		else if constexpr(std::is_same_v<T, ScaledTransform>)
+			return Type::ScaledTransform;
+		else if constexpr(std::is_same_v<T, Mat4>)
+			return Type::Mat4;
+		else if constexpr(std::is_same_v<T, Mat3x4>)
+			return Type::Mat3x4;
+		else if constexpr(std::is_same_v<T, Blob>)
+			return Type::Blob;
+		else if constexpr(std::is_same_v<T, BlobLz4>)
+			return Type::BlobLz4;
+		else if constexpr(std::is_same_v<T, Element>)
+			return Type::Element;
+		else if constexpr(std::is_same_v<T, Array>)
+			return Type::Array;
+		else if constexpr(std::is_same_v<T, ArrayLz4>)
+			return Type::ArrayLz4;
+		else if constexpr(std::is_same_v<T, Reference>)
+			return Type::Reference;
+		else if constexpr(std::is_same_v<T, Half>)
+			return Type::Half;
+		else if constexpr(std::is_same_v<T, Struct>)
+			return Type::Struct;
+		static_assert(umath::to_integral(Type::Count) == 36, "Update this list when new types are added!");
+		return Type::Invalid;
 	}
-	throw InvalidUsageError {std::string {"UDM type "} + std::string {magic_enum::enum_name(t)} + " has non-constant size!"};
-	static_assert(umath::to_integral(Type::Count) == 36, "Update this list when new types are added!");
-	return 0;
-}
 
-constexpr size_t udm::size_of_base_type(Type t)
-{
-	if(is_non_trivial_type(t)) {
-		auto tag = get_non_trivial_tag(t);
-		return std::visit([&](auto tag) { return sizeof(typename decltype(tag)::type); }, tag);
+	constexpr size_t size_of(Type t)
+	{
+		if(is_numeric_type(t)) {
+			auto tag = get_numeric_tag(t);
+			return std::visit([&](auto tag) { return sizeof(typename decltype(tag)::type); }, tag);
+		}
+
+		if(is_generic_type(t)) {
+			auto tag = get_generic_tag(t);
+			return std::visit(
+			  [&](auto tag) {
+				  if constexpr(std::is_same_v<typename decltype(tag)::type, std::monostate>)
+					  return static_cast<uint64_t>(0);
+				  return sizeof(typename decltype(tag)::type);
+			  },
+			  tag);
+		}
+		throw InvalidUsageError {std::string {"UDM type "} + std::string {magic_enum::enum_name(t)} + " has non-constant size!"};
+		static_assert(umath::to_integral(Type::Count) == 36, "Update this list when new types are added!");
+		return 0;
 	}
-	return size_of(t);
-}
 
-template<typename T>
-constexpr udm::Type udm::array_value_type_to_enum()
-{
-	static_assert(util::is_specialization<T, std::vector>::value);
-	return udm::type_to_enum<T::value_type>();
-}
+	constexpr size_t size_of_base_type(Type t)
+	{
+		if(is_non_trivial_type(t)) {
+			auto tag = get_non_trivial_tag(t);
+			return std::visit([&](auto tag) { return sizeof(typename decltype(tag)::type); }, tag);
+		}
+		return size_of(t);
+	}
 
-template<typename T1, typename T2, typename... T>
-void udm::StructDescription::DefineTypes(std::initializer_list<std::string>::iterator it)
-{
-	DefineTypes<T1>(it);
-	DefineTypes<T2, T...>(it + 1);
-}
-template<typename T>
-void udm::StructDescription::DefineTypes(std::initializer_list<std::string>::iterator it)
-{
-	types.push_back(type_to_enum<T>());
-	names.push_back(*it);
-}
+	template<typename T>
+	constexpr Type array_value_type_to_enum()
+	{
+		static_assert(util::is_specialization<T, std::vector>::value);
+		return type_to_enum<T::value_type>();
+	}
 
-constexpr bool udm::ArrayLz4::IsValueTypeSupported(Type type) { return is_numeric_type(type) || is_generic_type(type) || type == Type::Struct || type == Type::Element || type == Type::String; }
+	template<typename T1, typename T2, typename... T>
+	void StructDescription::DefineTypes(std::initializer_list<std::string>::iterator it)
+	{
+		DefineTypes<T1>(it);
+		DefineTypes<T2, T...>(it + 1);
+	}
+	template<typename T>
+	void StructDescription::DefineTypes(std::initializer_list<std::string>::iterator it)
+	{
+		types.push_back(type_to_enum<T>());
+		names.push_back(*it);
+	}
+
+	constexpr bool ArrayLz4::IsValueTypeSupported(Type type) { return is_numeric_type(type) || is_generic_type(type) || type == Type::Struct || type == Type::Element || type == Type::String; }
+};
 
 #pragma GCC diagnostic pop
-#pragma warning( pop )
-#endif
+#pragma warning(pop)

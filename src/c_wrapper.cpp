@@ -2,8 +2,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <udm.hpp>
+#include <udm_definitions.hpp>
 #include <sharedutils/util_file.h>
+#include <sharedutils/util.h>
+#include <sharedutils/util_library.hpp>
+#include <mathutil/umath.h>
+#include <mathutil/uvec.h>
+#include <functional>
+#include <fsys/filesystem.h>
+#include <cassert>
+#include <iostream>
+
+// This is a temporary fix for a msvc compiler bug where
+// glm::ivec3::length is not recognized as constexpr unless it's called here
+static void cxx_modules_fix(std::string str) { constexpr auto l = glm::ivec3::length(); }
+
+import udm;
 
 struct BaseUdmData {
 	BaseUdmData(const std::shared_ptr<udm::Data> &udmData, bool clearDataOnDestruction) : data {udmData}, clearDataOnDestruction {clearDataOnDestruction} {}
@@ -143,6 +157,7 @@ static T *udm_read_property_vt(UdmProperty udmData, const char *path, UdmType ty
 		return nullptr;
 	});
 }
+
 template<typename T>
 static T *udm_read_property_svt(UdmProperty udmData, const char *path, uint32_t arrayIndex, uint32_t memberIndex, UdmType type, uint32_t &outNumValues)
 {
@@ -217,34 +232,13 @@ static udm::StructDescription to_struct_description(uint32_t numMembers, UdmType
 }
 
 #define DEFINE_FUNDAMENTAL_TYPE_FUNCTIONS(NAME, TYPE)                                                                                                                                                                                                                                            \
-	DLLUDM TYPE udm_read_property_##NAME(UdmProperty udmData, const char *path, TYPE defaultValue)                                                                                                                                                                                               \
-	{                                                                                                                                                                                                                                                                                            \
-		return udm_read_property_t(udmData, path, defaultValue);                                                                                                                                                                                                                                 \
-	}                                                                                                                                                                                                                                                                                            \
-	DLLUDM void udm_write_property_##NAME(UdmProperty udmData, const char *path, TYPE value)                                                                                                                                                                                                     \
-	{                                                                                                                                                                                                                                                                                            \
-		udm_write_property_t(udmData, path, value);                                                                                                                                                                                                                                              \
-	}                                                                                                                                                                                                                                                                                            \
-	DLLUDM TYPE *udm_read_property_sv##NAME(UdmProperty udmData, const char *path, uint32_t arrayIndex, uint32_t memberIndex, UdmType type, uint32_t *outNumValues)                                                                                                                              \
-	{                                                                                                                                                                                                                                                                                            \
-		return udm_read_property_svt<TYPE>(udmData, path, arrayIndex, memberIndex, type, *outNumValues);                                                                                                                                                                                         \
-	}                                                                                                                                                                                                                                                                                            \
-	DLLUDM bool udm_write_property_sv##NAME(UdmProperty udmData, const char *path, uint32_t arrayIndex, uint32_t memberIndex, UdmType type, TYPE *values, uint32_t numValues)                                                                                                                    \
-	{                                                                                                                                                                                                                                                                                            \
-		return udm_write_property_svt<TYPE>(udmData, path, arrayIndex, memberIndex, type, values, numValues);                                                                                                                                                                                    \
-	}                                                                                                                                                                                                                                                                                            \
-	DLLUDM TYPE *udm_read_property_v##NAME(UdmProperty udmData, const char *path, UdmType type, uint32_t *outNumValues)                                                                                                                                                                          \
-	{                                                                                                                                                                                                                                                                                            \
-		return udm_read_property_vt<TYPE>(udmData, path, type, *outNumValues);                                                                                                                                                                                                                   \
-	}                                                                                                                                                                                                                                                                                            \
-	DLLUDM bool udm_write_property_v##NAME(UdmProperty udmData, const char *path, UdmType type, TYPE *values, uint32_t numValues)                                                                                                                                                                \
-	{                                                                                                                                                                                                                                                                                            \
-		return udm_write_property_vt<TYPE>(udmData, path, type, values, numValues);                                                                                                                                                                                                              \
-	}                                                                                                                                                                                                                                                                                            \
-	DLLUDM void udm_destroy_property_v##NAME(TYPE *value)                                                                                                                                                                                                                                        \
-	{                                                                                                                                                                                                                                                                                            \
-		delete[] value;                                                                                                                                                                                                                                                                          \
-	}
+	DLLUDM TYPE udm_read_property_##NAME(UdmProperty udmData, const char *path, TYPE defaultValue) { return udm_read_property_t(udmData, path, defaultValue); }                                                                                                                                  \
+	DLLUDM void udm_write_property_##NAME(UdmProperty udmData, const char *path, TYPE value) { udm_write_property_t(udmData, path, value); }                                                                                                                                                     \
+	DLLUDM TYPE *udm_read_property_sv##NAME(UdmProperty udmData, const char *path, uint32_t arrayIndex, uint32_t memberIndex, UdmType type, uint32_t *outNumValues) { return udm_read_property_svt<TYPE>(udmData, path, arrayIndex, memberIndex, type, *outNumValues); }                         \
+	DLLUDM bool udm_write_property_sv##NAME(UdmProperty udmData, const char *path, uint32_t arrayIndex, uint32_t memberIndex, UdmType type, TYPE *values, uint32_t numValues) { return udm_write_property_svt<TYPE>(udmData, path, arrayIndex, memberIndex, type, values, numValues); }          \
+	DLLUDM TYPE *udm_read_property_v##NAME(UdmProperty udmData, const char *path, UdmType type, uint32_t *outNumValues) { return udm_read_property_vt<TYPE>(udmData, path, type, *outNumValues); }                                                                                               \
+	DLLUDM bool udm_write_property_v##NAME(UdmProperty udmData, const char *path, UdmType type, TYPE *values, uint32_t numValues) { return udm_write_property_vt<TYPE>(udmData, path, type, values, numValues); }                                                                                \
+	DLLUDM void udm_destroy_property_v##NAME(TYPE *value) { delete[] value; }
 
 #define LOOKUP_FUNDAMENTAL_ADDRESSES(NAME, TYPE)                                                                                                                                                                                                                                                 \
 	auto *udm_read_property_##NAME = lib->FindSymbolAddress<TYPE (*)(UdmProperty, const char *, TYPE)>("udm_read_property_" #NAME);                                                                                                                                                              \
@@ -327,7 +321,7 @@ DLLUDM UdmElementIterator udm_create_property_child_name_iterator(UdmProperty pr
 	if(!childProp)
 		return nullptr;
 	auto baseProp = std::make_unique<udm::LinkedPropertyWrapper>(childProp);
-	auto elIt = baseProp->ElIt();
+	auto elIt = udm::ElIt {*baseProp};
 	auto it = elIt.begin();
 	auto *i = new BaseUdmElementIterator {std::move(baseProp), prop, elIt, it};
 	prop->data.AddDeleter([i]() { delete i; });
@@ -691,7 +685,6 @@ DLLUDM void udm_pose_to_matrix(const float pos[3], const float rot[4], const flo
 }
 }
 
-#include <sharedutils/util_library.hpp>
 void udm::detail::test_c_wrapper()
 {
 	// Note: This will only work if util_udm was built as a shared library!

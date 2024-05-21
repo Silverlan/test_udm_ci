@@ -2,13 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UDM_ENUMS_HPP__
-#define __UDM_ENUMS_HPP__
-
 #include <cstdint>
 #include <limits>
 
-namespace udm {
+export module udm.enums;
+export namespace udm
+{
 	enum class Type : uint8_t {
 		Nil = 0,
 		String,
@@ -89,4 +88,3 @@ namespace udm {
 		Default = None,
 	};
 };
-#endif

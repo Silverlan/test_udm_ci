@@ -2,10 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
+#include "udm_definitions.hpp"
 #include <lz4.h>
 #include <sharedutils/datastream.h>
 #include <sharedutils/scope_guard.h>
+#include <variant>
+#include <cassert>
+
+module udm;
 
 udm::Array::~Array() { Clear(); }
 

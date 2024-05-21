@@ -2,17 +2,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UDM_CONVERSION_HPP__
-#define __UDM_CONVERSION_HPP__
-
-#include "udm_types.hpp"
-#include "udm_trivial_types.hpp"
+#include "udm_definitions.hpp"
+#include <mathutil/uvec.h>
+#include <mathutil/transform.hpp>
 #include <type_traits>
 #include <cstring>
+#include <charconv>
+#include <algorithm>
 
 #pragma warning(push)
 #pragma warning(disable : 4715)
-namespace udm {
+
+export module udm.conversions;
+import udm.trivial_types;
+import udm.type_structs;
+import udm.types;
+import udm.basic_types;
+export namespace udm {
 	template<typename T>
 	using base_type = typename std::remove_cv_t<std::remove_pointer_t<std::remove_reference_t<T>>>;
 	namespace detail {
@@ -295,47 +301,48 @@ namespace udm {
 	constexpr bool is_convertible(Type tTo);
 	constexpr bool is_convertible(Type tFrom, Type tTo);
 };
-template<typename TTo>
-constexpr bool udm::is_convertible_from(Type tFrom)
-{
-	if(is_ng_type(tFrom))
-		return visit_ng(tFrom, [&](auto tag) { return is_convertible<typename decltype(tag)::type, TTo>(); });
-	switch(tFrom) {
-	case Type::String:
-		return is_convertible<String, TTo>();
-	case Type::Reference:
-		return is_convertible<Reference, TTo>();
-	}
-	return false;
-}
 
-template<typename TFrom>
-constexpr bool udm::is_convertible(Type tTo)
-{
-	if(is_ng_type(tTo))
-		return visit_ng(tTo, [&](auto tag) { return is_convertible<TFrom, typename decltype(tag)::type>(); });
-	switch(tTo) {
-	case Type::String:
-		return is_convertible<TFrom, String>();
-	case Type::Reference:
-		return is_convertible<TFrom, Reference>();
+export namespace udm {
+	template<typename TTo>
+	constexpr bool is_convertible_from(Type tFrom)
+	{
+		if(is_ng_type(tFrom))
+			return visit_ng(tFrom, [&](auto tag) { return is_convertible<typename decltype(tag)::type, TTo>(); });
+		switch(tFrom) {
+		case Type::String:
+			return is_convertible<String, TTo>();
+		case Type::Reference:
+			return is_convertible<Reference, TTo>();
+		}
+		return false;
 	}
-	return false;
-}
 
-constexpr bool udm::is_convertible(Type tFrom, Type tTo)
-{
-	if(is_ng_type(tFrom))
-		return visit_ng(tFrom, [&](auto tag) { return is_convertible<typename decltype(tag)::type>(tTo); });
-	switch(tFrom) {
-	case Type::String:
-		return is_convertible<String>(tTo);
-	case Type::Reference:
-		return is_convertible<Reference>(tTo);
+	template<typename TFrom>
+	constexpr bool is_convertible(Type tTo)
+	{
+		if(is_ng_type(tTo))
+			return visit_ng(tTo, [&](auto tag) { return is_convertible<TFrom, typename decltype(tag)::type>(); });
+		switch(tTo) {
+		case Type::String:
+			return is_convertible<TFrom, String>();
+		case Type::Reference:
+			return is_convertible<TFrom, Reference>();
+		}
+		return false;
 	}
-	return false;
-}
+
+	constexpr bool is_convertible(Type tFrom, Type tTo)
+	{
+		if(is_ng_type(tFrom))
+			return visit_ng(tFrom, [&](auto tag) { return is_convertible<typename decltype(tag)::type>(tTo); });
+		switch(tFrom) {
+		case Type::String:
+			return is_convertible<String>(tTo);
+		case Type::Reference:
+			return is_convertible<Reference>(tTo);
+		}
+		return false;
+	}
+};
 
 #pragma warning(pop)
-
-#endif

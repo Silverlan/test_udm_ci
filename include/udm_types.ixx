@@ -2,13 +2,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UDM_TYPES_HPP__
-#define __UDM_TYPES_HPP__
-
 #include <cinttypes>
 #include <memory>
 
-namespace udm {
+export module udm.types;
+export namespace udm {
 	struct Half;
 	struct Exception;
 	struct InvalidUsageError;
@@ -56,5 +54,3 @@ namespace udm {
 	enum class AsciiSaveFlags : uint32_t;
 	class Data;
 };
-
-#endif

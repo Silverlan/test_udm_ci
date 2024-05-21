@@ -2,15 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef __UDM_EXCEPTION_HPP__
-#define __UDM_EXCEPTION_HPP__
-
 #include "udm_definitions.hpp"
 #include <exception>
 #include <stdexcept>
 #include <string>
 
-namespace udm {
+export module udm.exceptions;
+export namespace udm
+{
 	struct DLLUDM Exception : public std::runtime_error {
 		Exception(const std::string &msg) : std::runtime_error {msg.c_str()}, m_msg {msg} {}
 	  private:
@@ -45,5 +44,3 @@ namespace udm {
 		using Exception::Exception;
 	};
 };
-
-#endif

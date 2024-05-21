@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.28)
 
 set(INCLUDE_DIRS)
 function(add_include_dir IDENTIFIER)
@@ -85,23 +85,35 @@ foreach(def IN LISTS DEFINITIONS)
 	add_definitions(-D${def})
 endforeach(def)
 
-function(def_vs_filters FILE_LIST)
-	foreach(source IN LISTS FILE_LIST)
-	    get_filename_component(source_path "${source}" PATH)
-	    string(REPLACE "${CMAKE_CURRENT_LIST_DIR}" "" source_path_relative "${source_path}")
-	    string(REPLACE "/" "\\" source_path_msvc "${source_path_relative}")
-	    source_group("${source_path_msvc}" FILES "${source}")
-	endforeach()
-endfunction(def_vs_filters)
+add_library(${PROJ_NAME} ${LIB_TYPE})
 
-file(GLOB_RECURSE SRC_FILES
-    "${CMAKE_CURRENT_LIST_DIR}/src/*.h"
-    "${CMAKE_CURRENT_LIST_DIR}/src/*.hpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/include/*.h"
-    "${CMAKE_CURRENT_LIST_DIR}/include/*.hpp"
+target_sources(${PROJ_NAME}
+  PUBLIC
+    FILE_SET cxx_modules TYPE CXX_MODULES FILES
+    include/udm.ixx
+    include/udm_conversion.ixx
+    include/udm_enums.ixx
+    include/udm_exception.ixx
+    include/udm_trivial_types.ixx
+    include/udm_type_structs.ixx
+    include/udm_types.ixx
+    include/udm_type_structs.ixx
+    include/udm_basic_types.ixx
+
+    src/array.cpp
+    src/ascii.cpp
+    src/c_wrapper.cpp
+    src/data.cpp
+    src/element.cpp
+    src/file.cpp
+    src/iterators.cpp
+    src/json.cpp
+    src/linked_property_wrapper.cpp
+    src/property.cpp
+    src/property_wrapper.cpp
+    src/util.cpp
 )
-add_library(${PROJ_NAME} ${LIB_TYPE} ${SRC_FILES})
+
 if(MSVC)
 	target_compile_options(${PROJ_NAME} PUBLIC "/bigobj")
 else()
@@ -111,7 +123,6 @@ if(WIN32)
 	target_compile_options(${PROJ_NAME} PRIVATE /wd4251)
 	target_compile_options(${PROJ_NAME} PRIVATE /wd4996)
 endif()
-def_vs_filters("${SRC_FILES}")
 
 foreach(LIB IN LISTS LIBRARIES)
 	target_link_libraries(${PROJ_NAME} ${${LIB}})

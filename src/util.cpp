@@ -2,8 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "udm.hpp"
 #include <lz4.h>
+#include <string_view>
+#include <string>
+#include <mathutil/uquat.h>
+#include <mathutil/umath.h>
+#include <cassert>
+#include <iostream>
+
+module udm;
 
 bool udm::does_key_require_quotes(const std::string_view &key) { return key.find_first_of(udm::CONTROL_CHARACTERS.c_str()) != std::string::npos || key.find_first_of(udm::WHITESPACE_CHARACTERS.c_str()) != std::string::npos || key.find(PATH_SEPARATOR) != std::string::npos; }
 
