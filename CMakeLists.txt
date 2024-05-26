@@ -14,8 +14,7 @@ pr_add_library(${PROJ_NAME} ${LIB_TYPE})
 pr_add_dependency(${PROJ_NAME} vfilesystem TARGET PUBLIC)
 pr_add_external_dependency(${PROJ_NAME} lz4 LIBRARY)
 
-pr_add_headers(${PROJ_NAME} "include/")
-pr_add_sources(${PROJ_NAME} "src/")
+pr_init_module(${PROJ_NAME} udm)
 
 if(NOT ${UTIL_UDM_STATIC})
 	pr_add_compile_definitions(
