@@ -5,6 +5,12 @@
 #include <cinttypes>
 #include <memory>
 
+namespace ufile {
+	struct IFile;
+	struct MemoryFile;
+	struct VectorFile;
+}
+
 export module udm.types;
 export namespace udm {
 	struct Half;
@@ -53,4 +59,8 @@ export namespace udm {
 	enum class FormatType : uint8_t;
 	enum class AsciiSaveFlags : uint32_t;
 	class Data;
+
+	using IFile = ufile::IFile;
+	using MemoryFile = ufile::MemoryFile;
+	using VectorFile = ufile::VectorFile;
 };

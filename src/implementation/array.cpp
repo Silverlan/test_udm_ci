@@ -6,6 +6,7 @@
 #include <lz4.h>
 #include <sharedutils/datastream.h>
 #include <sharedutils/scope_guard.h>
+#include <sharedutils/util_ifile.hpp>
 #include <variant>
 #include <cassert>
 

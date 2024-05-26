@@ -10,6 +10,22 @@
 
 module udm;
 
+udm::PProperty *udm::element_find_child(Element &el, Element &child)
+{
+	auto it = std::find_if(el.children.begin(), el.children.end(), [&child](const std::pair<std::string, PProperty> &pair) { return pair.second->type == Type::Element && pair.second->value == &child; });
+	if(it == el.children.end())
+		return nullptr;
+	return &it->second;
+}
+
+void udm::element_erase_value(Element &el, const Element &child)
+{
+	auto it = std::find_if(el.children.begin(), el.children.end(), [&child](const std::pair<std::string, PProperty> &pair) { return pair.second->type == Type::Element && pair.second->value == &child; });
+	if(it == el.children.end())
+		return;
+	el.children.erase(it);
+}
+
 udm::LinkedPropertyWrapper udm::Element::AddArray(const std::string_view &path, std::optional<uint32_t> size, Type type, ArrayType arrayType, bool pathToElements)
 {
 	auto prop = Add(path, (arrayType == ArrayType::Compressed) ? Type::ArrayLz4 : Type::Array, pathToElements);

@@ -4,8 +4,10 @@
 
 #include <udm_definitions.hpp>
 #include <sharedutils/base64.hpp>
+#include <sharedutils/util_ifile.hpp>
 #include <mathutil/umath.h>
 #include <sstream>
+#include <map>
 #include <cassert>
 
 module udm;

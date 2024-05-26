@@ -18,6 +18,7 @@ import udm.trivial_types;
 import udm.type_structs;
 import udm.types;
 import udm.basic_types;
+import udm.util;
 export namespace udm {
 	template<typename T>
 	using base_type = typename std::remove_cv_t<std::remove_pointer_t<std::remove_reference_t<T>>>;
