@@ -83,7 +83,7 @@ export namespace udm {
 					throw LogicError {"Cannot assign custom type to non-struct property!"};
 				return;
 			}
-			return operator=(*v);
+			return wrapper.operator=(*v);
 		}
 		else if constexpr(std::is_enum_v<std::remove_reference_t<TBase>>)
 			return wrapper.operator=(magic_enum::enum_name(v));

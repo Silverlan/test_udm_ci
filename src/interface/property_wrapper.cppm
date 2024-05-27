@@ -275,7 +275,7 @@ export namespace udm {
 	template<typename T>
 	void udm::LinkedPropertyWrapper::operator<<(T &&v)
 	{
-		operator=(*this, v);
+		operator=(v);
 	}
 
 	template<typename T>
