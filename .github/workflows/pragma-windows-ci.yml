@@ -1,12 +1,12 @@
 name: Build Windows
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 concurrency:
-  group: environment-win-${{ github.ref }}
+  group: environment-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -17,62 +17,34 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: windows-latest
-            name: "Windows x64 MSVC"
-            artifact: "Windows-MSVC.tar.xz"
-            build_type: "RelWithDebInfo"
-            environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
-            cc: "cl"
-            cxx: "cl"
-            archiver: "7z a"
-            generators: "Visual Studio 17 2022"
-            build_dir: 'build'
+          - os: 'windows-latest'
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: true
-
-      - name: Setup
-        id: setup
-        uses: Silverlan/common_actions/setup@main
           
-      - name: Download binaries
-        uses: Silverlan/common_actions/download_build_binaries@main
-        continue-on-error: true
-
-      - name: Build Dynamic Library
-        id: build-dynamic
-        uses: Silverlan/util_udm/github_actions/build@master
-        with:
-          repo-directory: '${{ github.workspace }}'
-          build_shared: '1'
-          build-directory: './build_dynamic'
+      - name: Clone pragma repository
+        run: |
+          git clone https://github.com/Silverlan/pragma.git
           
-      - name: Build Static Library
-        id: build-static
-        uses: Silverlan/util_udm/github_actions/build@master
-        with:
-          repo-directory: '${{ github.workspace }}'
-          build_shared: '0'
-          build-directory: './build_static'
+      - name: Copy cmake directory
+        run: |
+          cp -r pragma/cmake $GITHUB_WORKSPACE
+
+      - name: Configure and build with CMake
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDEPENDENCY_PRAGMA_EXECUTABLE_INCLUDE="../pragma/core/pragma/include/" ..
+          cmake --build . --config RelWithDebInfo --target util_udm
           
       - name: Create Release Files
         shell: bash
         run: |
           mkdir release
-
-          mkdir release/lib
-          cp build_static/${{ matrix.config.build_type }}/util_udm.lib release/lib/util_udm.lib
-
-          mkdir release/bin
-          cp build_dynamic/${{ matrix.config.build_type }}/util_udm.dll release/bin/util_udm.dll
-          cp build_dynamic/${{ matrix.config.build_type }}/util_udm.lib release/bin/util_udm.lib
-
-          # find . -type f -name "*.dll" -exec cp {} release/bin/ \;
-          # find . -type f -name "*.lib" -exec cp {} release/lib/ \;
+          cp ./build/RelWithDebInfo/util_udm release/
           
       - name: Release Binaries
         uses: Silverlan/common_actions/release_nightly_binaries@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit: ${{ github.ref_name }}
+          

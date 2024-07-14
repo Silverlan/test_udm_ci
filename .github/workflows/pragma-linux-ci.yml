@@ -1,9 +1,9 @@
 name: Build Linux
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 concurrency:
   group: environment-lin-${{ github.ref }}
@@ -17,54 +17,34 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: ubuntu-22.04
-            name: "Ubuntu GCC-11"
-            artifact: "ubuntu_gcc.7z"
-            build_type: "RelWithDebInfo"
-            cc: "clang-15"
-            cxx: "clang++-15"
-            archiver: "7z a"
-            generators: "Unix Makefiles"
-            build_dir: 'build'
+          - os: 'ubuntu-24.04'
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: true
-
-      - name: Setup
-        id: setup
-        uses: Silverlan/common_actions/setup@main
           
-      - name: Download binaries
-        uses: Silverlan/common_actions/download_build_binaries@main
-        continue-on-error: true
-
-      - name: Build Dynamic Library
-        id: build-dynamic
-        uses: Silverlan/util_udm/github_actions/build@master
-        with:
-          repo-directory: '${{ github.workspace }}'
-          build_shared: '1'
-          build-directory: './build_dynamic'
+      - name: Clone pragma repository
+        run: |
+          git clone https://github.com/Silverlan/pragma.git
           
-      - name: Build Static Library
-        id: build-static
-        uses: Silverlan/util_udm/github_actions/build@master
-        with:
-          repo-directory: '${{ github.workspace }}'
-          build_shared: '0'
-          build-directory: './build_static'
+      - name: Copy cmake directory
+        run: |
+          cp -r pragma/cmake $GITHUB_WORKSPACE
+          
+      - name: Install Ninja
+        run: |
+          sudo apt-get install ninja-build
+
+      - name: Configure and build with CMake
+        run: |
+          mkdir build
+          cd build
+          cmake -G "Ninja Multi-Config" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DDEPENDENCY_PRAGMA_EXECUTABLE_INCLUDE="../pragma/core/pragma/include/" -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 /path/to/source ..
+          cmake --build . --config RelWithDebInfo --target util_udm
           
       - name: Create Release Files
         shell: bash
         run: |
           mkdir release
-          mkdir release/lib
-          rsync build_static/libutil_udm.a release/lib/libutil_udm.a
-          rsync build_dynamic/libutil_udm.so release/lib/libutil_udm.so
-
-          # find . -type f -name "*.so" -exec cp {} release/lib/ \;
-          # find . -type f -name "*.a" -exec cp {} release/lib/ \;
+          cp ./build/RelWithDebInfo/util_udm release/
           
       - name: Release Binaries
         uses: Silverlan/common_actions/release_nightly_binaries@main
@@ -72,7 +52,3 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit: ${{ github.ref_name }}
           
-      - name: Handle Error
-        uses: Silverlan/common_actions/action_handle_error@main
-        if: failure()
-        
