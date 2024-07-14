@@ -25,6 +25,23 @@ jobs:
         run: |
           git clone https://github.com/Silverlan/pragma.git
           
+      - name: mathutil
+        run: |
+          cd pragma/external_libs
+          git clone https://github.com/Silverlan/mathutil.git
+
+          
+      - name: sharedutils
+        run: |
+          cd pragma/external_libs
+          git clone https://github.com/Silverlan/sharedutils.git
+
+          
+      - name: vfilesystem
+        run: |
+          cd pragma/external_libs
+          git clone https://github.com/Silverlan/vfilesystem.git
+
 
       - name: Print File Structure
         shell: bash
