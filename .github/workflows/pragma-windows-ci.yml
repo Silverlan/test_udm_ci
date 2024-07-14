@@ -25,6 +25,12 @@ jobs:
         run: |
           git clone https://github.com/Silverlan/pragma.git
           
+
+      - name: Print File Structure
+        shell: bash
+        run: |
+          ls -R
+
       - name: Copy cmake directory
         run: |
           cp -r pragma/cmake $GITHUB_WORKSPACE
