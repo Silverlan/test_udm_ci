@@ -14,6 +14,22 @@ set(PROJ_NAME util_udm)
 pr_add_library(${PROJ_NAME} ${LIB_TYPE})
 
 message(STATUS "Current source directory: ${CMAKE_SOURCE_DIR}")
+
+function(print_all_directories dir)
+    # Get all entries in the directory
+    file(GLOB entries "${dir}/*")
+
+    # Iterate over each entry
+    foreach(entry ${entries})
+        if(IS_DIRECTORY ${entry})
+            message(STATUS "Directory: ${entry}")
+        endif()
+    endforeach()
+endfunction()
+
+# Call the function for the current source directory
+print_all_directories(${CMAKE_SOURCE_DIR})
+
 add_subdirectory("./pragma/external_libs/sharedutils-static")
 add_subdirectory("./pragma/external_libs/sharedutils")
 add_subdirectory("./pragma/external_libs/mathutil")
