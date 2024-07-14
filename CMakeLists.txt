@@ -13,7 +13,7 @@ endif()
 set(PROJ_NAME util_udm)
 pr_add_library(${PROJ_NAME} ${LIB_TYPE})
 
-
+message(STATUS "Current source directory: ${CMAKE_SOURCE_DIR}")
 add_subdirectory("./pragma/external_libs/sharedutils-static")
 add_subdirectory("./pragma/external_libs/sharedutils")
 add_subdirectory("./pragma/external_libs/mathutil")
