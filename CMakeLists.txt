@@ -13,6 +13,13 @@ endif()
 set(PROJ_NAME util_udm)
 pr_add_library(${PROJ_NAME} ${LIB_TYPE})
 
+
+add_subdirectory("pragma/external_libs/sharedutils-static")
+add_subdirectory("pragma/external_libs/sharedutils")
+add_subdirectory("pragma/external_libs/mathutil")
+add_subdirectory("pragma/external_libs/vfilesystem")
+
+
 pr_add_dependency(${PROJ_NAME} vfilesystem TARGET PUBLIC)
 pr_add_dependency(${PROJ_NAME} lz4 TARGET)
 
