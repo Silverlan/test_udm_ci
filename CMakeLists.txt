@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.28)
+
 include(${CMAKE_SOURCE_DIR}/cmake/pr_common.cmake)
 
 option(UTIL_UDM_STATIC "Build as static library?" ON)
